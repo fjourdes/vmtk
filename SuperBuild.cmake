@@ -28,7 +28,7 @@ set( gen "${CMAKE_GENERATOR}" )
 
 if( VTK_VMTK_WRAP_PYTHON )
 
-find_package( PythonInterp )
+find_package (Python3 COMPONENTS Interpreter Development)
 
 if (APPLE AND VMTK_BREW_PYTHON)
   execute_process(
@@ -37,15 +37,21 @@ if (APPLE AND VMTK_BREW_PYTHON)
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   set(PYTHON_INCLUDE_DIR ${PYTHON_PREFIX}/Headers CACHE PATH "")
   set(PYTHON_LIBRARY ${PYTHON_PREFIX}/Python CACHE FILEPATH "")
-else ()
-  find_package( PythonLibs )
+# else ()
+  # find_package( PythonLibs )
 endif ()
+
+message( "Python3_EXECUTABLE=${Python3_EXECUTABLE}" )
+message( "Python3_ROOT_DIR=${Python3_ROOT_DIR}" )
+
+set(PYTHON_INCLUDE_DIR ${Python3_INCLUDE_DIRS} )
+set(PYTHON_LIBRARY ${Python3_LIBRARIES} )
 
 if (WIN32)
   set( PYTHON_MAJORMINOR ${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR} )
-  string( REGEX MATCH "[0-9][0-9]" PYTHON_MIN_MINOR ${PYTHON_EXECUTABLE}  )
-  string( REGEX MATCH "(.*[/])*" PYTHON_ROOT_DIR ${PYTHON_EXECUTABLE}  )
-  file( TO_NATIVE_PATH ${PYTHON_ROOT_DIR} PYTHON_ROOT_DIR_NATIVE )
+  string( REGEX MATCH "[0-9][0-9]" PYTHON_MIN_MINOR ${Python3_EXECUTABLE}  )
+  string( REGEX MATCH "(.*[/])*" PYTHON_ROOT_DIR ${Python3_EXECUTABLE}  )
+  file( TO_NATIVE_PATH ${Python3_ROOT_DIR} PYTHON_ROOT_DIR_NATIVE )
 endif ()
 
 endif()
