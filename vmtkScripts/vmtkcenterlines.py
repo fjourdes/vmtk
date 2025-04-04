@@ -129,11 +129,14 @@ class vmtkPointListSeedSelector(vmtkSeedSelector):
             point = [self.SourcePoints[3*i+0],self.SourcePoints[3*i+1],self.SourcePoints[3*i+2]]
             id = pointLocator.FindClosestPoint(point)
             self._SourceSeedIds.InsertNextId(id)
+            self.InputInfo(f"Source point: {point} id: {id}")
 
         for i in range(len(self.TargetPoints)//3):
             point = [self.TargetPoints[3*i+0],self.TargetPoints[3*i+1],self.TargetPoints[3*i+2]]
             id = pointLocator.FindClosestPoint(point)
             self._TargetSeedIds.InsertNextId(id)
+            self.InputInfo(f"Target point: {point} id: {id}")
+
 
 
 class vmtkPickPointSeedSelector(vmtkSeedSelector):
@@ -171,6 +174,8 @@ class vmtkPickPointSeedSelector(vmtkSeedSelector):
             pickedSeedId = pickedCellPointIds.GetId(0)
         self.PickedSeedIds.InsertNextId(pickedSeedId)
         point = self._Surface.GetPoint(pickedSeedId)
+        self.InputInfo(f"Picked point: {point} id: {pickedSeedId}")
+
         self.PickedSeeds.GetPoints().InsertNextPoint(point)
         self.PickedSeeds.Modified()
         self.vmtkRenderer.RenderWindow.Render()
@@ -620,8 +625,8 @@ class vmtkCenterlines(pypes.pypeScript):
 
         centerlineFilter = vtkvmtk.vtkvmtkPolyDataCenterlines()
         centerlineFilter.SetInputData(centerlineInputSurface)
-        if self.SeedSelectorName in ['openprofiles','carotidprofiles','profileidlist']:
-            centerlineFilter.SetCapCenterIds(capCenterIds)
+        # if self.SeedSelectorName in ['openprofiles','carotidprofiles','profileidlist']:
+            # centerlineFilter.SetCapCenterIds(capCenterIds)
         centerlineFilter.SetSourceSeedIds(inletSeedIds)
         centerlineFilter.SetTargetSeedIds(outletSeedIds)
         centerlineFilter.SetRadiusArrayName(self.RadiusArrayName)
