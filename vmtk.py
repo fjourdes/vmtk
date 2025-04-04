@@ -17,17 +17,10 @@ if __name__ == '__main__':
     if sys.platform == 'win32':
 
         vmtkhome = os.path.dirname(os.path.abspath(__file__))
+        python_site = os.path.join(vmtkhome,"Lib","site-packages")
 
-        if vmtkhome.endswith('bin'):
-            vmtkhome = os.path.join(os.path.dirname(os.path.abspath(__file__)),"..")
-            os.environ["PYTHONPATH"] = os.path.join(vmtkhome)
-        else:
-            vmtkhome = os.path.join(os.path.dirname(os.path.abspath(__file__)),"..","..","..")
-            os.environ["PYTHONPATH"] = os.path.join(vmtkhome,"lib","${VMTK_PYTHON_VERSION}","site-packages")
-
-        sys.path.append(os.path.join(vmtkhome,"bin"))
-        sys.path.append(os.environ["PYTHONPATH"])
-        os.environ["PATH"] += os.path.pathsep + os.path.join(vmtkhome,"bin")
+        sys.path.insert(0,python_site)
+        sys.path.insert(0,vmtkhome)
 
     import vtk
     from vmtk import pypes
