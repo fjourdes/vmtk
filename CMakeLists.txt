@@ -4,57 +4,10 @@ project(VMTK)
 
 include(GNUInstallDirs)
 
-# vmtk versions number
-set(VMTK_VERSION_MAJOR 1)
-set(VMTK_VERSION_MINOR 5)
-set(VMTK_VERSION_PATCH 0)
-set(VMTK_VERSION
-    "${VMTK_VERSION_MAJOR}.${VMTK_VERSION_MINOR}.${VMTK_VERSION_PATCH}")
-
-set(VMTK_CMAKE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
-add_subdirectory(CMake)
-list(INSERT CMAKE_MODULE_PATH 0
-  ${VMTK_CMAKE_DIR}
-  ${vtkAddon_CMAKE_DIR}
-  )
-
-
-find_package (Python3 COMPONENTS Interpreter Development)
-
-if (NOT VMTK_PYTHON_VERSION)
-  set(VMTK_PYTHON_VERSION "python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}" CACHE STRING "" FORCE)
-endif ()
-mark_as_advanced(VMTK_PYTHON_VERSION)
-
-set(PYTHON_INCLUDE_PATH ${Python3_INCLUDE_DIRS} CACHE STRING "" FORCE)
-
-
-set(VTK_WRAP_PYTHON_FIND_LIBS OFF CACHE BOOL "" FORCE)
-set(VTK_UNDEFINED_SYMBOLS_ALLOWED ON CACHE BOOL "" FORCE)
-
-#-----------------------------------------------------------------------------
-# ITK setup
-option( USE_SYSTEM_ITK
-  "Exclude ITK from SuperBuild and use an existing build instead." ON )
-if( USE_SYSTEM_ITK )
-  set(ITK_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/ITK-5.4" CACHE STRING "ITK cmake search directory")
-  find_package( ITK REQUIRED )
-  include( ${ITK_USE_FILE} )
-endif()
-
-set(VMTK_RENDERING_BACKEND "OpenGL2" CACHE STRING "Graphic backend for VTK")
-
-#-----------------------------------------------------------------------------
-# VTK setup
-option( USE_SYSTEM_VTK
-  "Exclude VTK from SuperBuild and use an existing build instead." ON )
-if( USE_SYSTEM_VTK )
-  set(VTK_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/vtk-9.1" CACHE STRING "VTK cmake search directory")
-  find_package( VTK REQUIRED )
-  if( ${VTK_VERSION_MAJOR} LESS 6 )
-    include( ${VTK_USE_FILE} )
-  endif()
-endif()
+# Apparently shared libs are required for python wrapping
+# Define it here to be sure it's consistent everywhere.
+set(BUILD_SHARED_LIBS TRUE CACHE BOOL "")
+set(VTK_VMTK_BUILD_SHARED_LIBS TRUE CACHE BOOL "")
 
 message("VMTK_BINARY_DIR=${VMTK_BINARY_DIR}")
 # Set up our directory structure for output libraries and binaries
@@ -71,6 +24,52 @@ set(VMTK_INSTALL_LIBDIR ${CMAKE_INSTALL_LIBDIR})
 set(VMTK_INSTALL_INCLUDE_DIR ${CMAKE_INSTALL_INCLUDEDIR})
 set(VMTK_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR})
 
+# vmtk versions number
+set(VMTK_VERSION_MAJOR 1)
+set(VMTK_VERSION_MINOR 5)
+set(VMTK_VERSION_PATCH 0)
+set(VMTK_VERSION
+    "${VMTK_VERSION_MAJOR}.${VMTK_VERSION_MINOR}.${VMTK_VERSION_PATCH}")
+
+set(VMTK_CMAKE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
+add_subdirectory(CMake)
+list(INSERT CMAKE_MODULE_PATH 0
+  ${VMTK_CMAKE_DIR}
+  ${vtkAddon_CMAKE_DIR}
+  )
+
+set(Python3_FIND_REGISTRY NEVER) # disallow looking in the windows registry to avoid Python version mismatch
+find_package (Python3 COMPONENTS Interpreter Development)
+
+set(PYTHON_INCLUDE_PATH ${Python3_INCLUDE_DIRS} CACHE STRING "" FORCE)
+# Required to avoid Python lookup error with the vtkWrapPython.cmake (L 209) "bundled" with VMTK.
+# Probably vtkWrapPython could be superseded with the vtkWrapPythonModule directly provided by VTK
+# Anyway this should do the trick
+set(VTK_UNDEFINED_SYMBOLS_ALLOWED ON CACHE BOOL "" FORCE)
+set(VTK_WRAP_PYTHON_FIND_LIBS OFF CACHE BOOL "" FORCE)
+
+set(VMTK_PYTHON_VERSION ${Python3_VERSION} CACHE STRING "" FORCE)
+mark_as_advanced(VMTK_PYTHON_VERSION)
+
+
+#-----------------------------------------------------------------------------
+# ITK setup
+set(ITK_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/ITK-5.4" CACHE STRING "ITK cmake search directory")
+find_package( ITK REQUIRED )
+include( ${ITK_USE_FILE} )
+
+set(VMTK_RENDERING_BACKEND "OpenGL2" CACHE STRING "Graphic backend for VTK")
+
+#-----------------------------------------------------------------------------
+# VTK setup
+set(VTK_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/vtk-9.1" CACHE STRING "VTK cmake search directory")
+find_package( VTK REQUIRED )
+if( ${VTK_VERSION_MAJOR} LESS 6 )
+    include( ${VTK_USE_FILE} )
+endif()
+
+set(VMTK_USE_VTK9 TRUE CACHE BOOL "" FORCE)
+set(VMTK_USE_ITK5 TRUE CACHE BOOL "" FORCE)
 
 if (NOT DEFINED VMTK_PYTHON_SITE_PACKAGES_PREFIX)
     vtk_module_python_default_destination(VMTK_PYTHON_SITE_PACKAGES_PREFIX)
@@ -91,21 +90,7 @@ if(VMTK_WITH_LIBRARY_VERSION)
 endif()
 
 
-if (APPLE AND VMTK_BREW_PYTHON)
-  if(VMTK_BREW_PYTHON)
-    option(VMTK_BREW_PYTHON "Link against Homebrew Python" ON)
-    set(PYTHON_SHEBANG ${PYTHON_EXECUTABLE})
-  else()
-    set(PYTHON_SHEBANG "/usr/bin/env python")
-  endif()
-  #if(VMTK_BREW_PYTHON)
-  #  execute_process(
-  #    COMMAND /usr/local/bin/python -c "from distutils import sysconfig; print sysconfig.get_python_inc()"
-  #    OUTPUT_VARIABLE PYTHON_INCLUDE_DIR
-  #    OUTPUT_STRIP_TRAILING_WHITESPACE)
-  #  set(PYTHON_LIBRARY ${PYTHON_INCLUDE_DIR}../../lib/lib${VMTK_PYTHON_VERSION}.dylib)
-  #endif()
-elseif (UNIX)
+if (UNIX)
   set(PYTHON_SHEBANG "/usr/bin/env python")
 endif ()
 
@@ -117,41 +102,8 @@ else ()
   set ( VTK_USE_X OFF CACHE BOOL "" FORCE )
 endif()
 
-
-
-# Superbuild setup
-option( VMTK_USE_SUPERBUILD
-  "Build VMTK and the projects it depends on via SuperBuild.cmake." OFF )
-
 set(VMTK_TEST_DATA_SOURCE "git-submodule" CACHE STRING "git-submodule initializes the vmtk-test-data repository. in-place assumes test data is already available.")
 set_property(CACHE VMTK_TEST_DATA_SOURCE PROPERTY STRINGS in-place git-submodule)
-
-# Git setup
-if (VMTK_USE_SUPERBUILD OR VMTK_TEST_DATA_SOURCE MATCHES "git-submodule")
-  if( NOT GIT_EXECUTABLE )
-    find_package( Git REQUIRED )
-  endif()
-
-  option( GIT_PROTOCOL_HTTPS
-    "Use HTTPS for git access (useful if behind a firewall)" OFF )
-  if( GIT_PROTOCOL_HTTPS )
-    set( GIT_PROTOCOL "https" CACHE STRING "Https protocol for file transfer" FORCE )
-  else()
-    set( GIT_PROTOCOL "git" CACHE STRING "Git protocol for file transfer" FORCE )
-  endif()
-  mark_as_advanced( GIT_PROTOCOL )
-endif()
-
-option( VMTK_USE_ITK5
-  "Compile vmtk against ITK 5. OFF is ITK 4.13" ON )
-
-option( VMTK_USE_VTK9
-  "Compile vmtk against VTK 9. OFF is VTK 8" ON )
-
-
-if( NOT VMTK_USE_VTK9 )
-  message(FATAL_ERROR "This version of VMTK only supports VTK9")
-endif()
 
 option( VMTK_BUILD_TESTING
   "Build the VMTK testing libraries" OFF)
@@ -159,9 +111,6 @@ option( VMTK_BUILD_TESTING
 if(VMTK_BUILD_TESTING)
   add_subdirectory(tests)
 endif()
-
-option( VMTK_BUNJEE_BUILD
-  "Build VMTK and the projects it depends on ready for being linked from Bunjee." OFF )
 
 option( BUILD_VMTK_DOCUMENTATION "Build the methods to build doxygen documentation for VMTK locally" OFF )
 
@@ -171,20 +120,6 @@ mark_as_advanced(BUILD_VMTK_DOCUMENTATION)
 if(BUILD_VMTK_DOCUMENTATION)
   set(BUILD_DOCUMENTATION ON)
 endif()
-
-
-if ( NOT ITK_FOUND )
-    find_package( ITK REQUIRED )
-    include( ${ITK_USE_FILE} )
-endif()
-
-if ( NOT VTK_FOUND )
-find_package( VTK REQUIRED )
-    if( ${VTK_VERSION_MAJOR} LESS 6 )
-      include( ${VTK_USE_FILE} )
-    endif()
-endif()
-
 
 option(VMTK_SCRIPTS_ENABLED "Build and install vmtkScripts and Pypes" ON)
 mark_as_advanced(VMTK_SCRIPTS_ENABLED)
