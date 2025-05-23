@@ -82,7 +82,7 @@ install(FILES ${files}
   COMPONENT Development)
 
 
-configure_file(${VTK_VMTK_SOURCE_DIR}/vtkvmtk.py ${VMTK_BINARY_DIR}/vtkvmtk.py COPYONLY)
+configure_file(${VTK_VMTK_SOURCE_DIR}/vtkvmtk.py ${VTK_VMTK_BINARY_DIR}/vtkvmtk.py COPYONLY)
 install(
     FILES ${VTK_VMTK_BINARY_DIR}/vtkvmtk.py
     DESTINATION ${VMTK_MODULE_INSTALL_LIB_DIR}
