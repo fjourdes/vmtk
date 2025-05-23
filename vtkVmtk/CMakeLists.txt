@@ -30,8 +30,6 @@ if (VTK_VMTK_CONTRIB)
   list(APPEND dirs Contrib)
 endif ()
 
-include (${VMTK_SOURCE_DIR}/CMake/CMakeOptions.cmake)
-
 configure_file(
   ${VTK_VMTK_SOURCE_DIR}/vtkvmtkConfigure.h.in
   ${VTK_VMTK_BINARY_DIR}/vtkvmtkConfigure.h
